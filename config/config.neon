@@ -1,0 +1,138 @@
+extensions:
+	application: Nette\Bridges\ApplicationDI\ApplicationExtension(%debugMode%, [], %tempDir%/cache/nette.application)
+	events.application: Contributte\Events\Extra\DI\EventApplicationBridgeExtension
+	http: Nette\Bridges\HttpDI\HttpExtension(%consoleMode%)
+	phpdoc: Contributte\PhpDoc\DI\PhpDocExtension
+	routing: Nette\Bridges\ApplicationDI\RoutingExtension(%debugMode%)
+	session: Nette\Bridges\HttpDI\SessionExtension(%debugMode%, %consoleMode%)
+	tracy.navigation: Contributte\Tracy\DI\NavigationPanelExtension
+
+application:
+	catchExceptions: %catchExceptions.ui%
+	debugger: %debug.panels.ui.routes%
+	errorPresenter: Modette:UI:InternalError
+	mapping:
+		*: ['', *, *\Presenter\*Presenter]
+	scanComposer: false
+	scanDirs: false
+	silentLinks: false
+
+decorator:
+	Modette\UI\Presenter\Base\BasePresenter:
+		setup:
+			- $absoluteUrls = true
+			- injectSecondary(developmentServer: %server.development%)
+
+http:
+	headers:
+		Referrer-Policy: same-origin # https://scotthelme.co.uk/a-new-security-header-referrer-policy/
+		X-Content-Type-Options: nosniff
+		X-Frame-Options: DENY
+		X-Powered-By: Modette
+		X-XSS-Protection: '1; mode=block'
+	# https://scotthelme.co.uk/content-security-policy-an-introduction/
+	# https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP#Browser_compatibility
+	csp:
+		base-uri: self
+		form-action: self
+		frame-ancestors: none
+		block-all-mixed-content: #disallows load http content on https pages
+	featurePolicy: # https://scotthelme.co.uk/a-new-security-header-feature-policy/
+		geolocation: self
+		midi: self
+		notifications: self
+		push: self
+		sync-xhr: self
+		microphone: self
+		camera: self
+		magnetometer: self
+		gyroscope: self
+		speaker: self
+		vibrate: self
+		fullscreen: self
+		payment: self
+
+modette.http.frontRouter:
+	ui:
+		enable: true
+
+parameters:
+	catchExceptions:
+		ui: false
+	debug:
+		panels:
+			ui:
+				#navigation: %debugMode% # TODO - https://github.com/contributte/tracy/issues/15
+				routes: %debugMode%
+				session: %debugMode%
+
+routing:
+	cache: true
+	debugger: %debug.panels.ui.routes%
+
+services:
+	# Fake translator
+	a.fake.translator.to.remove: Modette\UI\FakeTranslator
+
+	# Override default PresenterFactoryCallback with our strict version
+	application.presenterFactory:
+		arguments: [Modette\UI\DI\PresenterFactoryCallback()]
+
+	# Form factory
+	forms.factory:
+		factory: Modette\UI\Forms\FormFactory
+
+	# Flashes
+	modette.ui.flashes.mapper:
+		factory: Modette\UI\Utils\FlashesMapper
+
+	# Internal error
+	modette.ui.internalError.presenter:
+		type: Modette\UI\InternalError\Presenter\InternalErrorPresenter
+		factory: Modette\UI\InternalError\Presenter\InternalErrorPresenter
+
+	# Themes
+	modette.ui.themes.resolving.control:
+		factory: Modette\UI\Themes\Resolving\ControlResolver
+		type: Modette\Templates\Themes\Resolving\Resolver
+
+	# Document basic controls
+	modette.ui.control.body.factory:
+		implement: Modette\UI\Control\Body\BodyFactory
+	modette.ui.control.breadcrumb.factory:
+		implement: Modette\UI\Control\Breadcrumb\BreadcrumbFactory
+	modette.ui.control.document.factory:
+		implement: Modette\UI\Control\Document\DocumentFactory
+	modette.ui.control.head.factory:
+		implement: Modette\UI\Control\Head\HeadFactory
+	modette.ui.control.icons.factory:
+		implement: Modette\UI\Control\Icons\IconsFactory
+	modette.ui.control.links.factory:
+		implement: Modette\UI\Control\Links\LinksFactory
+	modette.ui.control.meta.factory:
+		implement: Modette\UI\Control\Meta\MetaFactory
+	modette.ui.control.noscript.factory:
+		implement: Modette\UI\Control\NoScript\NoScriptFactory
+	modette.ui.control.title.factory:
+		implement: Modette\UI\Control\Title\TitleFactory
+
+	modette.ui.control.styles.factory:
+		implement: Modette\UI\Control\Styles\StylesFactory
+
+session:
+	autoStart: smart
+	# TODO - add support for automatic configuration of cookieDomain, cookiePath and cookieSecure
+	#cookieDomain: '?->getUrl()->getDomain(2)'(@Nette\Http\IRequest)
+	cookieHttponly: true
+	#cookiePath: '?->getUrl()->getBasePath()'(@Nette\Http\IRequest) # Cookie path same as $basePath
+	cookieSamesite: Lax
+	cookieSecure: auto
+	debugger: %debug.panels.ui.session%
+	expiration: 14 days
+	name: SID
+	readAndClose: true
+	sidBitsPerCharacter: 6 # 4-6
+	sidLength: 128 # 22-250 (256 is max, but filesystems...)
+	useCookies: true
+	useOnlyCookies: true
+	useStrictMode: true

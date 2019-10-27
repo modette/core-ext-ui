@@ -1,0 +1,17 @@
+parameters:
+	ignoreErrors:
+		# Waiting for nette/utils:3.0
+		- message: '#(.*)should be (contravariant|covariant) with(.*)#'
+		  path: %currentWorkingDirectory%/src/FakeTranslator.php
+
+		# nette/application have no typehint specified
+		- message: '#(.*)should be (contravariant|covariant) with(.*)#'
+		  path: %currentWorkingDirectory%/src/Utils/FlashMessages.php
+
+		# Broken purposely - form translator is disabled
+		- message: '#(.*)should be (contravariant|covariant) with(.*)#'
+		  path: %currentWorkingDirectory%/src/Forms/Form.php
+
+		# It can be null
+		- message: '#Strict comparison using === between string and null will always evaluate to false\.#'
+		  path: %currentWorkingDirectory%/src/Themes/ThemeAblePresenter.php
